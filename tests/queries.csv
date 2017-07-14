@@ -1,0 +1,12 @@
+metric,value,filter,betafilter,event,from,period,entity,grouped,resultset,returns,intent,response,comment,skip,id
+average,age,open,,,tickets,,,,,number,SelectMetricFromPeriod,Average age,,1,1
+,age,open,oldest,,tickets,,,,,number,SelectMetricFromPeriod,Sorry,Not supported yet,1,2
+number of,replies,open,oldest,,tickets,,,,,number,SelectMetricFromPeriod,Sorry,Not supported yet,1,3
+number of,,open,,,tickets,,,,,number,SelectMetricFromPeriod,I found,,1,4
+number of,,open,,,tickets,,,organization,,set,SelectResultFromPeriod,I found,,1,5
+,oldest,,,,tickets,,,,ticket,single,SelectResultFromPeriod,I found 1,,,6
+,,,,,tickets,,,,ticket,single,SelectResultFromPeriod,addasdsa,,,7
+,open,oldest,,,tickets,,,,ticket,single,SelectResultFromPeriod,addasdsa,,,8
+,open,oldest,,,tickets,,,,ticket,single,SelectResultFromPeriod,addasdsa,,,9
+,oldest,,,,tickets,,,,ticket,single,SelectResultFromPeriod,addasdsa,,,10
+average,assignment time,,,,tickets,,current resultset,,,number,SelectMetricFromPeriod,Average,Not supported yet,,11

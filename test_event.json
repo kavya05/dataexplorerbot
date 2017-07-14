@@ -1,0 +1,45 @@
+{
+  "currentIntent": {
+    "slots": {
+      "metric": "number of",
+      "value": "replies",
+      "filter": "open",
+      "betafilter": "",
+      "from": "tickets",
+      "resultSet1": "tickets",
+      "event": "updated",
+      "period1": "last 7 days"
+    },
+    "slots1":{"from": "high tickets", "metric": "many", "filter": "open open"  },
+    "slots1": {
+      "metric": "number of",
+      "filter": "open",
+      "betafilter": "closed",
+      "from": "tickets",
+      "event": "updated",
+      "value": "count",
+      "period": "last 7 days"
+    },
+    "slots1": {
+      "metric": "",
+      "filter": "open",
+      "betafilter": "oldest",
+      "from": "tickets"
+    },
+    "name": "SelectMetricFromPeriod",
+    "name1": "SelectBooleanFromPeriod",
+    "name1": "SelectResultFromPeriod",
+    "confirmationStatus": "None"
+  },
+  "bot": {
+    "alias": "$LATEST",
+    "version": "$LATEST",
+    "name": "DataBot"
+  },
+  "userId": "MatsL",
+  "invocationSource": "",
+  "invocationSource1": "DialogCodeHook",
+  "outputDialogMode": "Text",
+  "messageVersion": "1.0",
+  "sessionAttributes": {}
+}
