@@ -14,6 +14,8 @@ import dateutil.parser
 import logging
 from dataquery import DataQuery
 from dataquery import DataMetric
+from databot_session import DataBot_Session
+import boto3
 #import dateparser
 
 logger = logging.getLogger()
@@ -21,8 +23,11 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 #logger.setLevel(logging.WARN)
 
-
 class HumanReadable(object):
+    @staticmethod
+    def get_url_to_viewer(session_id):
+        return "http://localhost:8080/{}/".format(session_id)
+
     @staticmethod
     def DataQuery_validate(invalid_query, invalid_metric):
         logger.info('invalid_query/invalid_metric={}/{}'.format(invalid_query, invalid_metric))
@@ -37,6 +42,8 @@ class HumanReadable(object):
             elif invalid_slot['parameter'] == 'filter' and invalid_slot['value'] != False:
                 if invalid_slot['reason'] == 'contradiction':
                     message.append("Filter on both {} and {} doesn't make sense to me.".format(invalid_slot['value'], invalid_slot['contradiction_value']))
+                elif invalid_slot['reason'] == 'empty':
+                    message.append("You need to provide a filter, e.g. open, closed.")
                 else:
                     message.append("I cannot filter on {}".format(invalid_slot['value']))
             else:
@@ -56,7 +63,7 @@ class HumanReadable(object):
         return " ".join(message)
 
     @staticmethod
-    def dataMetricResult(result, query):
+    def dataMetricResult(result, query, session_id):
         res = result.result
 
         if result.metric == 'exists':
@@ -68,23 +75,19 @@ class HumanReadable(object):
         elif result.metric == 'resultset':
             if res:
                 max_show = 5
-                ret_str = "I found {} {} {}".format(len(res), " ".join(query.filters), query.query_from)
+                ret_str = "I found {} {} {}.".format(res, " ".join(query.filters), query.query_from, HumanReadable.get_url_to_viewer(session_id))#You can review them here: {}
 
-                if max_show < len(result.result):
-                    ret_str += " (showing {} first)".format(max_show)
-
-                ret_str += ": "
-
-                for entry in result.result[0:max_show]:
-                    ret_str += "{} ".format(entry['ticket_id'])
+                if query.period and query.event:
+                    ret += "{} during {}".format(query.event, query.period)
 
                 return ret_str
             else:
-                return "There are no such elemnts"
+                ret = "Sorry, I didn't find any {0} during {1} ".format(", ".join(query.filters), query.query_from)
+                if query.period and query.event:
+                    ret += "{} {}".format(query.event, query.period)
+                return ret
         else:
-            if result.count == 0:
-                return "Sorry, I didn't find any {} {}".format(" ".join(query.filters), query.query_from)
-            else:
+            if result.count > 0:
                 metric_hr = result.metric.title()
                 value_hr  = result.value
                 result_hr = res
@@ -97,12 +100,23 @@ class HumanReadable(object):
                         result_hr = "{:.1%}".format(res)
                     #res =
                 elif result.value == 'count':
-                    return "I found {} {} {}".format(result_hr, " ".join(query.filters), query.query_from)
+                    ret = "I found {} {} {} ".format(result_hr, " ".join(query.filters), query.query_from)
+                    if query.period and query.event:
+                        ret += "{} during {}".format(query.event, query.period)
+                    return ret
 
                 if result.value == 'age':
                     result_hr = pretty_seconds(res)
 
                 return "{} {} is {} for {} {} {} found".format(metric_hr, value_hr, result_hr, result.count, " ".join(query.filters), query.query_from)
+            else:
+                ret = "Sorry, I didn't find any {} {} ".format(" ".join(query.filters), query.query_from)
+                
+                if query.period and query.event:
+                    ret += "{} during {}".format(query.event, query.period)
+
+                return ret
+
 
 
 
@@ -299,13 +313,41 @@ def request_is_invalid(query, metric, intent_request):
             })
     return False
 
+def get_session(session):
+    if not 'session_id' in session or session['session_id'] is None:
+        session = DataBot_Session.create()
+    else:
+        session = DataBot_Session(session['session_id'])
 
-# filter, metric, from, period
-def selectMetricFromPeriod(intent_request):
+    return session
+
+def publish_query(session_id, results):
+    lambda_client = boto3.client('lambda')
+    lambda_client.invoke(
+        FunctionName="databot_session_publish",
+        InvocationType='Event',
+        Payload=json.dumps({'session_id':session_id, 'results': results})
+    )
+
+def notify_publish(session_id):
+    lambda_client = boto3.client('lambda')
+    lambda_client.invoke(
+        FunctionName="databot_session_publish",
+        InvocationType='Event',
+        Payload=json.dumps({'session_id':session_id})
+    )
+
+
+def process_query(intent_request, query, metric):
     session = intent_request['sessionAttributes'] if intent_request['sessionAttributes'] is not None else {}
 
-    query  = DataQuery(intent_request['currentIntent']['slots'])
-    metric = DataMetric(intent_request['currentIntent']['slots'], query.query_from)
+    data_session = get_session(intent_request)
+    if data_session is None:
+        logger.warn("Failed to create Session. Proceeding anyway...")
+    else:
+        session['session_id'] = data_session.session_id
+        if intent_request['invocationSource'] != 'DialogCodeHook':
+            notify_publish(data_session.session_id)
 
     session['current_query'] = query.toJson()
     session['current_metric'] = metric.toJson()
@@ -321,7 +363,10 @@ def selectMetricFromPeriod(intent_request):
 
     result = metric.calc_on_query(query)
 
-    #session['current_query']  = query
+    if not data_session is None:
+        publish_query(data_session.session_id, result.results)
+        data_session.update(query, metric, result)
+
     session['current_result'] = result.toJson()
 
     return close(
@@ -329,46 +374,31 @@ def selectMetricFromPeriod(intent_request):
         'Fulfilled',
         {
             'contentType': 'PlainText',
-            'content': '{} '.format(HumanReadable.dataMetricResult(result, query))
+            'content': '{} '.format(HumanReadable.dataMetricResult(result, query, data_session.session_id))
         },
         {}
     )
 
-def SelectBooleanFromPeriod(intent_request):
-    session = intent_request['sessionAttributes'] if intent_request['sessionAttributes'] is not None else {}
+# filter, metric, from, period
+def selectMetricFromPeriod(intent_request):
+    query  = DataQuery(intent_request['currentIntent']['slots'])
+    metric = DataMetric(intent_request['currentIntent']['slots'], query.query_from)
 
+    logger.warn(query.toJson())
+
+    return process_query(intent_request, query, metric)
+
+
+def SelectBooleanFromPeriod(intent_request):
     query  = DataQuery(intent_request['currentIntent']['slots'])
     metric = DataMetric({
         'metric': 'exists'
     }, query.query_from)
 
-    session['current_query'] = query.toJson()
-    session['current_metric'] = metric.toJson()
+    return process_query(intent_request, query, metric)
 
-    invalid = request_is_invalid(query, metric, intent_request)
-    if invalid != False:
-        return invalid
-
-    if intent_request['invocationSource'] == 'DialogCodeHook':
-        return delegate(session, intent_request['currentIntent']['slots'])
-
-    result = metric.calc_on_query(query)
-
-    logger.info('query/metric={}/{}'.format(query.toJson(), metric.toJson()))
-
-    return close(
-        session,
-        'Fulfilled',
-        {
-            'contentType': 'PlainText',
-            'content': '{} '.format(HumanReadable.dataMetricResult(result, query))
-        },
-        {}
-    )
 
 def SelectResultFromPeriod(intent_request):
-    session = intent_request['sessionAttributes'] if intent_request['sessionAttributes'] is not None else {}
-
     if intent_request['currentIntent']['slots']['from'] is None and not intent_request['currentIntent']['slots']['resultSet'] is None:
         intent_request['currentIntent']['slots']['from'] = intent_request['currentIntent']['slots']['resultSet']
 
@@ -377,30 +407,34 @@ def SelectResultFromPeriod(intent_request):
         'metric': 'resultset'
     }, query.query_from)
 
-    session['current_query'] = query.toJson()
-    session['current_metric'] = metric.toJson()
+    return process_query(intent_request, query, metric)
 
-    invalid = request_is_invalid(query, metric, intent_request)
-    if invalid != False:
-        return invalid
+def ShowViewer(intent_request):
+    session = intent_request['sessionAttributes'] if intent_request['sessionAttributes'] is not None else {}
 
-    if intent_request['invocationSource'] == 'DialogCodeHook':
-        return delegate(session, intent_request['currentIntent']['slots'])
+    data_session = get_session(session)
 
+    if data_session is None:
+        return close(
+            session,
+            'Fulfilled',
+            {
+                'contentType': 'PlainText',
+                'content': "I'm sorry, I can't give you the link to the viewer right now..."
+            },
+            {}
+        )
+    else:
+        return close(
+            session,
+            'Fulfilled',
+            {
+                'contentType': 'PlainText',
+                'content': 'Sure, you can view the results here: {}'.format(HumanReadable.get_url_to_viewer(data_session.session_id))
+            },
+            {}
+        )
 
-    result = metric.calc_on_query(query)
-
-    logger.info('query/metric={}/{}'.format(query.toJson(), metric.toJson()))
-
-    return close(
-        session,
-        'Fulfilled',
-        {
-            'contentType': 'PlainText',
-            'content': '{} '.format(HumanReadable.dataMetricResult(result, query))
-        },
-        {}
-    )
 
 # --- Intents ---
 
@@ -421,6 +455,8 @@ def dispatch(intent_request):
         return SelectBooleanFromPeriod(intent_request)
     if intent_name == 'SelectResultFromPeriod':
         return SelectResultFromPeriod(intent_request)
+    if intent_name == 'ShowViewer':
+        return ShowViewer(intent_request)
 
 
     raise Exception('Intent with name ' + intent_name + ' not supported')
@@ -444,6 +480,12 @@ def lambda_handler(event, context):
 
 if __name__ == '__main__':
     import sys
+    #sys.path.append("/local/lib/python2.7/dist-packages")
+    #sys.path.insert(0, "/local/lib/python2.7/dist-packages")
+    os.environ['DATABOT_ZD_EMAIL'] = 'mats.lundberg@carus.com'
+    os.environ['DATABOT_ZD_TOKEN'] = 'WXXzUFmJAJ4wPFIlrV1vcbdha40hizwR1uvYsfjM'
+    os.environ['DATABOT_ZD_SUBDOMAIN'] = 'caruspbs'
+    #print sys.path
     logging.basicConfig()
     if len(sys.argv) > 1:
 

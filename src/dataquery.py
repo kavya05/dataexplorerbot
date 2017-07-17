@@ -6,10 +6,40 @@ import dateutil.parser
 import logging
 from zenpy import Zenpy
 from zenpy.lib.api_objects import Ticket, User
+import re
 
 logger = logging.getLogger()
 
-class DataQuery(object):
+# Tries to parse string describing a relative date, and returns it.
+# e.g. last 7 days, yesterday, tomorrow, etc.
+def parse_period(period):
+    if 'yesterday' in period:
+        period = '1 day'
+    elif 'tomorrow' in period:
+        period = 'next 1 day'
+
+    for match in ['day', 'week', 'month', 'year', 'minute', 'second']:
+        if match in period:
+            add_delta = False if not 'next' in period else True
+
+            qty = int(re.search(r'\d+', period).group())
+            if qty is None:
+                qty = 1
+            deltaparams = {}
+            deltaparams[match+'s'] = qty
+            print deltaparams
+
+            if add_delta:
+                date_period_ago = datetime.datetime.now() + datetime.timedelta(**deltaparams)
+            else:
+                date_period_ago = datetime.datetime.now() - datetime.timedelta(**deltaparams)
+
+            return date_period_ago
+
+
+    return None
+
+class DataQuery:
     zenpy_client = False
     filters = []
     query_from = False
@@ -24,6 +54,7 @@ class DataQuery(object):
         'closed': ['status', 'closed'],
         'solved': ['status', 'solved'],
         'on-hold': ['status', 'on-hold'],
+        'hold': ['status', 'on-hold'],
         'low': ['priority', 'low'],
         #'low priority': ['priority', 'low'],
         'medium': ['priority', 'medium'],
@@ -129,26 +160,36 @@ class DataQuery(object):
 
     def __init__(self, parameters):
         # Go through both filter and betafilter and add each word from them
-        logger.info("Init DataQuery")
+        #logger.info("Init DataQuery")
+        #logger.info(parameters)
+        #logger.info(self.__dict__)
+        #logger.info(self.filters)
+        self.filters = []
         for param in ['filter', 'betafilter']:
             for allowed_filter in self.filter_to_zenpy:
-                logger.info("Looking at allowed_filter "+allowed_filter)
+                #logger.info("Looking at allowed_filter "+allowed_filter)
                 if param in parameters:
-                    logger.info("Looking at parameter "+param)
-                    logger.info("{}/{}/{}".format(parameters[param], allowed_filter in parameters[param], allowed_filter not in self.filters))
+                    #logger.info("Looking at parameter "+param)
+                    #logger.info("{}/{}/{}".format(parameters[param], allowed_filter in parameters[param], allowed_filter not in self.filters))
                     if (not parameters[param] is None) and (allowed_filter in parameters[param]) and (allowed_filter not in self.filters):
+                        #logger.info("Added {}".format(allowed_filter))
                         self.filters.append(allowed_filter)
                 #for param_word in parameters[param].split(" "):
                 #    if param_word and not param_word in self.filters:
-        print self.filters
+        #print self.filters
         if 'event' in parameters:
             self.event = parameters['event']
 
         if 'from' in parameters:
             self.query_from = parameters['from']
+        elif 'query_from' in parameters:
+            self.query_from = parameters['query_from']
 
         if 'period' in parameters:
             self.period = parameters['period']
+
+            if self.event == False or self.event is None:
+                self.event = 'created'
 
         if 'entity' in parameters:
             self.entity = parameters['entity']
@@ -156,6 +197,7 @@ class DataQuery(object):
     def validate(self):
         ret = []
         has_filter_type = {}
+
         for param in self.filters:
             if not param in self.filter_to_zenpy and not param in self.filter_to_postprocess:
                 ret.append({'parameter': 'filter', 'value': param, 'reason': 'unknown'})
@@ -168,6 +210,7 @@ class DataQuery(object):
                 else:
                     has_filter_type[ filter_type ] = param
 
+
         if self.event and not self.event in self.event_to_zenpy:
             ret.append({'parameter': 'event', 'value': self.event, 'reason': 'unknown'})
 
@@ -179,6 +222,9 @@ class DataQuery(object):
         if self.entity and not self.entity in self.entity_to_zenpy:
             ret.append({'parameter': 'entity', 'value': self.entity, 'reason': 'unknown'})
 
+        if len(self.filters) == 0 and self.event == False and self.entity == False:
+            ret.append({'parameter': 'filter', 'value': None, 'reason': 'empty'})
+
         return ret
 
 
@@ -189,11 +235,20 @@ class DataQuery(object):
         jsonobj['filters'] = self.filters
         return json.dumps(jsonobj)
 
+    def toDict(self):
+        obj = self.__dict__
+        obj['zenpy_client'] = None
+        obj['filters'] = self.filters
+        return obj
+
     # Simple json deserialization
     @staticmethod
-    def fromJson(json):
-        params = json.loads(json)
-        params['filter'] = params['filter'].join(" ")
+    def fromJson(jsonIn):
+        params = json.loads(jsonIn)
+
+        if 'filters' in params:
+            params['filter'] = " ".join(params['filters'])
+
         return DataQuery(params)
         #query = {
         #    'filter':     intent_request['currentIntent']['slots']['filter'] if 'filter' in intent_request['currentIntent']['slots'] is not None else False,
@@ -214,14 +269,12 @@ class DataQuery(object):
     	# Apply entry = prepare_row(from, entry) for each result entry
 
         creds = {
-            'email' : 'mats.lundberg@carus.com',
-            'token' : 'WXXzUFmJAJ4wPFIlrV1vcbdha40hizwR1uvYsfjM',
-            'subdomain': 'caruspbs'
+            'email' : os.environ['DATABOT_ZD_EMAIL'],
+            'token' : os.environ['DATABOT_ZD_TOKEN'],
+            'subdomain': os.environ['DATABOT_ZD_SUBDOMAIN']
         }
 
         zenpy_query = {}
-
-        print self
 
         query_from = self.from_to_zenpy[ self.query_from ]
         zenpy_query[ query_from[0] ] = query_from[1]
@@ -234,8 +287,10 @@ class DataQuery(object):
 
         ## Create period based on events
         if self.period:
-            period_date = dateparser.parse(self.period.replace("last", "")+" ago")
+            period_date = parse_period(self.period)
             now         = datetime.datetime.now()
+
+            #event = self.event if self.event != False else 'created' # Done when creating query instead
 
             if period_date < now:
                 zenpy_query[self.event+'_between'] = [period_date, now]
@@ -244,6 +299,7 @@ class DataQuery(object):
 
         # Execute the actual search
         self.zenpy_client = Zenpy(**creds)
+        logger.info("Query sent to Zendesk: {}".format(zenpy_query))
         zenpy_search = self.zenpy_client.search(**zenpy_query)
 
         result = []
@@ -276,6 +332,15 @@ class DataQuery(object):
             age = datetime.datetime.now() - datetime.datetime.strptime(entry.created_at, '%Y-%m-%dT%H:%M:%SZ')
             ret['age'] = age.total_seconds()
             ret['ticket_id'] = entry.id
+            #print entry.via.source
+            #ret['from_email'] = entry.via.source.from_.address if not entry.via.source.from_ is None else None
+            ret['updated'] = entry.updated_at
+            ret['created'] = entry.created_at
+            ret['subject'] = entry.subject
+            ret['priority'] = entry.priority
+            ret['type'] = entry.type
+            ret['status'] = entry.status
+            ret['tags'] = entry.tags
 
             #metrics = self.zenpy_client.tickets.metrics(entry.id)
             #ret['replies'] = metrics.replies
@@ -304,10 +369,11 @@ def calc_exists(entry, field, ret):
 
 def calc_resultset(entry, field, ret):
     ret['count']  = ret['count'] + 1 if 'count' in ret else 1
-    if not ret['result']:
-        ret['result'] = [entry]
-    else:
-        ret['result'].append(entry)
+    ret['result'] = ret['count']
+    #if not ret['result']:
+    #    ret['result'] = [entry]
+    #else:
+    #    ret['result'].append(entry)
     return ret
 
 def calc_average(entry, field, ret):
@@ -350,7 +416,7 @@ def calc_notsupported(entry, field, ret):
     return ret
 
 # --- Helpers that build all of the responses ---
-class DataMetric(object):
+class DataMetric:
     metric_funcs = {
         'average': calc_average,
         'median': calc_notsupported,
@@ -428,8 +494,7 @@ class DataMetric(object):
         for entry in results:
             ret = self._calc(entry, ret)
 
-        #print ret
-        return DataMetricResult(self.metric, self.value, ret['result'], ret['count'], '', ret['entry'])
+        return DataMetricResult(self.metric, self.value, ret['result'], ret['count'], '', ret['entry'], results)
 
     def validate(self):
         ret = []
@@ -447,22 +512,39 @@ class DataMetric(object):
     def toJson(self):
         return json.dumps(self.__dict__)
 
+    def toDict(self):
+        return self.__dict__
 
-class DataMetricResult(object):
+    @staticmethod
+    def fromJson(jsonIn):
+        params = json.loads(jsonIn)
+        return DataMetric(params, params['query_from'])
+
+
+class DataMetricResult:
     metric = False
     value = False
     result = False
     count = False
     query_from = False
     entry = False
+    results = False
 
-    def __init__(self, metric, value, result, count, query_from, entry):
+    def __init__(self, metric, value, result, count, query_from, entry, results):
         self.metric = metric
         self.value = value
         self.result = result
         self.count = count
         self.query_from = query_from
         self.entry = entry
+        self.results = results
 
     def toJson(self):
-        return json.dumps(self.__dict__)
+        obj = self.__dict__
+        obj['results'] = None
+        return json.dumps(obj)
+
+    @staticmethod
+    def fromJson(jsonIn):
+        params = json.loads(jsonIn)
+        return DataMetricResult(**params)

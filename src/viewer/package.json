@@ -1,0 +1,17 @@
+{
+  "name": "viewer",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "mqtt": "~2.9.1",
+    "requirejs": "~2.3.3",
+    "axios": "~0.16.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "BSD-2-Clause"
+}

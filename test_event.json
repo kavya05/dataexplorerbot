@@ -1,14 +1,14 @@
 {
   "currentIntent": {
     "slots": {
-      "metric": "number of",
-      "value": "replies",
+      "metric": "many",
+      "value1": "count",
       "filter": "open",
       "betafilter": "",
       "from": "tickets",
       "resultSet1": "tickets",
-      "event": "updated",
-      "period1": "last 7 days"
+      "event1": "updated",
+      "period": "last 2 weeks"
     },
     "slots1":{"from": "high tickets", "metric": "many", "filter": "open open"  },
     "slots1": {
@@ -26,6 +26,7 @@
       "betafilter": "oldest",
       "from": "tickets"
     },
+    "name1": "ShowViewer",
     "name": "SelectMetricFromPeriod",
     "name1": "SelectBooleanFromPeriod",
     "name1": "SelectResultFromPeriod",

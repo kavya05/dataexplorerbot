@@ -1,3 +1,4 @@
 build/
 virtualenv/
-*.pyc
+**/*.pyc
+node_modules/

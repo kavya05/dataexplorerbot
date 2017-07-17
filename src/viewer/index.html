@@ -1,0 +1,183 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+<link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+<style>
+body {
+  font-family: Roboto;
+}
+#error,
+#loading {
+  background: rgba(255,255,255,0.6);
+  width: 100%;
+  height: 100%;
+  font-size: 2em;
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 30% 40%;
+  box-sizing: border-box;
+}
+#error {
+
+}
+</style>
+</head>
+<body>
+    <h1 id="message">Showing results...</h1>
+    <div id="results">
+      <table>
+        <thead>
+          <tr>
+            <th>Ticket</th>
+            <th>Priority</th>
+            <th>Status</th>
+            <th>Summary</th>
+            <th>Type</th>
+            <th>Updated</th>
+          </tr>
+        </thead>
+        <tbody id="results_body"></tbody>
+      </table>
+    </div>
+    <div id="loading">LOADING ...</div>
+    <div id="error" style="display: none;">Woopsies... Something went wrong, please reload the page!</div>
+
+    <script src="/node_modules/mqtt/dist/mqtt.js"></script>
+    <script src="/node_modules/axios/dist/axios.js"></script>
+<script>
+var get_session_id = function() {
+  url = window.location.href
+  parts = url.split('/')
+  if(parts.length < 4)
+    return false
+  return parts[3];
+}
+
+var add_message = function(message) {
+  document.getElementById('message').innerHTML = message
+}
+
+var add_row = function(row, runseq) {
+  var results_body = document.getElementById('results_body')
+  var rowobj = document.createElement('tr')
+  for(col of ['ticket_id', 'priority', 'status', 'subject', 'type', 'updated']) {
+    cell = document.createElement('td');
+    cell.innerHTML = row[ col ]
+    rowobj.appendChild(cell)
+  }
+  rowobj.className = 'runseq-'+runseq
+  results_body.appendChild(rowobj)
+  //innerHTML += row.ticket_id + '<br>'
+}
+
+var show_loading = function() {
+  document.getElementById('loading').style.display = 'block'
+}
+
+var hide_loading = function() {
+  document.getElementById('loading').style.display = 'none'
+}
+
+var show_error = function() {
+  hide_loading()
+  document.getElementById('error').style.display = 'block'
+}
+
+var init_subscription = function() {
+  client.post(subscribe_url, {})
+  .then(function (response) {
+    //console.log(response.data);
+    init_mqtt(response.data.url, session_id)
+  })
+  .catch(function (error) {
+    //console.log(error);
+    show_error()
+  });
+}
+
+var init_mqtt = function(url, session_id) {
+  var client  = mqtt.connect(url)
+  console.log(client)
+  client.on('connect', function () {
+    client.subscribe('databot/session/'+session_id)
+  })
+
+  client.on('message', function (topic, message) {
+    message = JSON.parse(message.toString())
+    console.log(topic, message)
+    if(message.type == 'start') {
+      // Pop runseq on array with all runseq
+      runsequences.push(message.runseq)
+      console.log(runsequences)
+      show_loading()
+    }
+    if(message.type == 'end') {
+      // Hide all elements with older runseq
+      for(runseq of runsequences) {
+        if(runseq == message.runseq) {
+          continue;
+        }
+        console.log('hiding '+runseq)
+        var rows = document.getElementsByClassName('runseq-'+runseq)
+        for(row of rows) {
+          row.style.display = 'none';
+        }
+      }
+      hide_loading()
+    }
+    if(message.type == 'entry') {
+      // add data as necessary, if runseq is newest active
+      add_row(message.value, message.runseq)
+    }
+    if(message.type == 'message') {
+      // add data as necessary, if runseq is newest active
+      add_message(message.value)
+    }
+
+  })
+}
+
+var api_base = 'https://9o5e1mu2b4.execute-api.us-west-2.amazonaws.com/alpha'
+var session_id = get_session_id()
+var subscribe_url = api_base+'/sessions/'+session_id+'/subscriptions'
+var currentres_url = api_base+'/sessions/'+session_id+'/current-results'
+var client = axios.create({
+  baseURL: api_base,
+  timeout: 10000,
+  headers: {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+    //'Access-Control-Allow-Origin': '*'
+  }});
+
+// Used to keep track of which rows to hide when updating
+var runsequences = []
+
+client.get(currentres_url, {})
+.then(function (response) {
+  console.log(response)
+  var runseq = '0'
+  runsequences.push(runseq)
+  add_message(response.data.message)
+  for(row in response.data.results) {
+    add_row(response.data.results[ row ], runseq)
+  }
+
+  init_subscription()
+  hide_loading()
+})
+.catch(function (error) {
+  console.log(error);
+});
+
+//init_subscription()
+
+//var url = 'wss://a7aevuun65t6z.iot.us-west-2.amazonaws.com/mqtt?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAJSOF5PH3FKQAGFWA%2F20170715%2Fus-west-2%2Fiotdevicegateway%2Faws4_request&X-Amz-Date=20170715T064225Z&X-Amz-Expires=30&X-Amz-SignedHeaders=host&X-Amz-Signature=869a6a6d59a6244f21e9f609d92a67f0b5b1b6355bee70f4531f6a2a7a5ad60f'
+
+
+</script>
+</body>
+</html>
