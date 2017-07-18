@@ -12,15 +12,13 @@ dynamodb_client = boto3.resource('dynamodb')
 dynamodb_table = dynamodb_client.Table('databot_sessions')
 
 class DataBot_Session(object):
-    session_id = False
-    item = False
-
     def __init__(self, session_id):
+        self.item = False
         self.session_id = session_id
 
     @staticmethod
     def create():
-        session_id = "{}".format(uuid.uuid5(uuid.NAMESPACE_DNS, 'kvitli.com'))
+        session_id = "{}".format(uuid.uuid4())
 
         item = {
             'session_id': {'S':session_id}

@@ -23,7 +23,7 @@ def lambda_handler(event, context):
     result = metric.calc_on_query(query)
 
     ret = {
-        'message': '{}'.format(HumanReadable.dataMetricResult(result, query, session.session_id)),
+        'message': '{}'.format(HumanReadable.dataMetricResult(result, query, session.session_id, False)),
         'query': query.toDict(),
         'metric': metric.toDict(),
         'results': result.results

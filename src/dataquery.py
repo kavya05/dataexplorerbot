@@ -12,20 +12,41 @@ logger = logging.getLogger()
 
 # Tries to parse string describing a relative date, and returns it.
 # e.g. last 7 days, yesterday, tomorrow, etc.
+# TODO This should return start, end date to search from. For better semantic parsing of a period
 def parse_period(period):
     if 'yesterday' in period:
-        period = '1 day'
+        period = '1.5 day' # See above todo, yesterday eqauls 1.5 days is kind of a hack here...
     elif 'tomorrow' in period:
         period = 'next 1 day'
+    elif 'today' in period:
+        period = '1 day'
+
+    str_to_num = {'one': '1', 'two': '2', 'three': '3', 'four': '4', 'five': '5', 'six': '6', 'seven': '7',
+    'eight': '8', 'nine': '9', 'ten': '10', 'eleven': '11', 'twelve': '12', 'thirteen': '13'}
+
+    for num in str_to_num:
+        period = period.replace(" {} ".format(num), str_to_num[num])
 
     for match in ['day', 'week', 'month', 'year', 'minute', 'second']:
         if match in period:
             add_delta = False if not 'next' in period else True
+            regexp = re.search(r'\d+', period)
+            if regexp is None:
+                qty = 1
+            else:
+                qty = int(regexp.group())
 
-            qty = int(re.search(r'\d+', period).group())
             if qty is None:
                 qty = 1
             deltaparams = {}
+
+            if match == 'month':
+                match = 'day'
+                qty = qty * 30
+            elif match == 'year':
+                match = 'day'
+                qty = qty * 365
+
             deltaparams[match+'s'] = qty
             print deltaparams
 
@@ -39,31 +60,24 @@ def parse_period(period):
 
     return None
 
-class DataQuery:
-    zenpy_client = False
-    filters = []
-    query_from = False
-    event = False
-    period = False
-    entity = False
-
+class DataQuery(object):
     filter_to_zenpy = {
         'new': ['status', 'new'],
         'open': ['status', 'open'],
         'pending': ['status', 'pending'],
         'closed': ['status', 'closed'],
         'solved': ['status', 'solved'],
-        'on-hold': ['status', 'on-hold'],
-        'hold': ['status', 'on-hold'],
-        'low': ['priority', 'low'],
-        #'low priority': ['priority', 'low'],
-        'medium': ['priority', 'medium'],
-        #'medium priority': ['priority', 'medium'],
+        'hold': ['status', 'hold'],
+        #'on-hold': ['status', 'hold'],
+        #'low': ['priority', 'low'],
+        'low priority': ['priority', 'low'],
+        #'medium': ['priority', 'medium'],
+        'medium priority': ['priority', 'medium'],
         #'priority': ['priority', 'high'], # TODO is this wise? ... NO!
-        'high': ['priority', 'high'],
-        #'high priority': ['priority', 'high'],
+        #'high': ['priority', 'high'],
+        'high priority': ['priority', 'high'],
         'urgent': ['priority', 'urgent'],
-        'critical': ['priority', 'critical'],
+        'critical': ['priority', 'urgent'],
     }
 
     filter_to_postprocess = {
@@ -84,6 +98,7 @@ class DataQuery:
         'solved': 'solved_between',
         'closed': 'closed_between',
         'updated': 'updated_between',
+        'due': 'due_date_between',
     }
 
     from_to_zenpy = {
@@ -101,82 +116,21 @@ class DataQuery:
     entity_to_zenpy = {
     }
 
-    #EVENTS
-
-#    METRICS
-    #Metrics
-    #Average
-    #Number of
-    #Median
-    #Min
-    #Max
-#    Most
-#    Percentage
-#    Least
-#    Best
-    """
-        VALUES
-        Age
-        (Count)
-        First reply time
-        Satisfaction Rating
-        Active (??)
-        Assignment time
-
-        GROUPED
-        Ticket status
-        Agent
-        Group
-        Channel
-        Organization
-        Customer
-        Brand
-        Priority
-        Status
-        Ticket type
-
-        FROM
-        Tickets
-        Agents
-        Those tickets
-        These tickest
-        Of these
-        Incident
-        Question
-        Problem
-        Task
-
-        ENITITY
-        Brand X
-        Customer X
-        Channel X
-        Group X
-        Organization X
-        it
-        them
-        these
-        those
-    """
-
     def __init__(self, parameters):
-        # Go through both filter and betafilter and add each word from them
-        #logger.info("Init DataQuery")
-        #logger.info(parameters)
-        #logger.info(self.__dict__)
-        #logger.info(self.filters)
+        self.zenpy_client = False
         self.filters = []
+        self.query_from = False
+        self.event = False
+        self.period = False
+        self.entity = False
+
+        # Go through both filter and betafilter and add each word from them
         for param in ['filter', 'betafilter']:
             for allowed_filter in self.filter_to_zenpy:
-                #logger.info("Looking at allowed_filter "+allowed_filter)
                 if param in parameters:
-                    #logger.info("Looking at parameter "+param)
-                    #logger.info("{}/{}/{}".format(parameters[param], allowed_filter in parameters[param], allowed_filter not in self.filters))
                     if (not parameters[param] is None) and (allowed_filter in parameters[param]) and (allowed_filter not in self.filters):
-                        #logger.info("Added {}".format(allowed_filter))
                         self.filters.append(allowed_filter)
-                #for param_word in parameters[param].split(" "):
-                #    if param_word and not param_word in self.filters:
-        #print self.filters
+
         if 'event' in parameters:
             self.event = parameters['event']
 
@@ -194,6 +148,11 @@ class DataQuery:
         if 'entity' in parameters:
             self.entity = parameters['entity']
 
+        # TODO This converts input params to lowercase, unsure if it's a good idea to be so defensive...
+        for d in self.__dict__:
+            if isinstance(self.__dict__[d], basestring):
+                self.__dict__[d] = self.__dict__[d].lower()
+
     def validate(self):
         ret = []
         has_filter_type = {}
@@ -210,20 +169,27 @@ class DataQuery:
                 else:
                     has_filter_type[ filter_type ] = param
 
-
         if self.event and not self.event in self.event_to_zenpy:
             ret.append({'parameter': 'event', 'value': self.event, 'reason': 'unknown'})
 
         if self.query_from and not self.query_from in self.from_to_zenpy:
             ret.append({'parameter': 'from', 'value': self.event, 'reason': 'unknown'})
 
-        ## TODO Add validation of self.period
+        if self.period != False and self.period != None and parse_period(self.period) is None:
+            ret.append({'parameter': 'period', 'value': self.period, 'reason': 'unknown'})
 
         if self.entity and not self.entity in self.entity_to_zenpy:
             ret.append({'parameter': 'entity', 'value': self.entity, 'reason': 'unknown'})
 
         if len(self.filters) == 0 and self.event == False and self.entity == False:
             ret.append({'parameter': 'filter', 'value': None, 'reason': 'empty'})
+
+        # Make request invalid if no status filter given without an event. Due to performance reasons
+        if self.event == False and (not 'status' in has_filter_type):
+            ret.append({'parameter': 'filter', 'value': None, 'reason': 'performance'})
+        # Make request invalid if filter on closed/solved without an event. Due to performance reasons
+        elif self.event == False and (has_filter_type['status'] == 'closed' or has_filter_type['status'] == 'solved'):
+            ret.append({'parameter': 'filter', 'value': has_filter_type['status'], 'reason': 'performance'})
 
         return ret
 
@@ -250,16 +216,6 @@ class DataQuery:
             params['filter'] = " ".join(params['filters'])
 
         return DataQuery(params)
-        #query = {
-        #    'filter':     intent_request['currentIntent']['slots']['filter'] if 'filter' in intent_request['currentIntent']['slots'] is not None else False,
-        #    'betafilter': intent_request['currentIntent']['slots']['betafilter'] if 'betafilter' in intent_request['currentIntent']['slots'] is not None else False,
-        #    'event':      intent_request['currentIntent']['slots']['event'] if 'event' in intent_request['currentIntent']['slots'] is not None else False,
-        #    'from':       intent_request['currentIntent']['slots']['from'] if 'from' in intent_request['currentIntent']['slots'] is not None else False,
-        #    'period':     intent_request['currentIntent']['slots']['period'] if 'period' in intent_request['currentIntent']['slots'] is not None else False,
-        #    'entity':     intent_request['currentIntent']['slots']['entity'] if 'entity' in intent_request['currentIntent']['slots'] is not None else False,
-        #}
-        #self.make = make
-        #self.model = model
 
     def execute(self):
     	# select data via API from
@@ -291,11 +247,15 @@ class DataQuery:
             now         = datetime.datetime.now()
 
             #event = self.event if self.event != False else 'created' # Done when creating query instead
+            if self.event in self.event_to_zenpy:
+                event = self.event_to_zenpy[ self.event ]
+            else:
+                evemt = self.event+"_between"
 
             if period_date < now:
-                zenpy_query[self.event+'_between'] = [period_date, now]
+                zenpy_query[event] = [period_date, now]
             else:
-                zenpy_query[self.event+'_between'] = [now, period_date]
+                zenpy_query[event] = [now, period_date]
 
         # Execute the actual search
         self.zenpy_client = Zenpy(**creds)
@@ -303,6 +263,7 @@ class DataQuery:
         zenpy_search = self.zenpy_client.search(**zenpy_query)
 
         result = []
+        print zenpy_search
         for ticket in zenpy_search:
             result.append(self.prepare_row(self.query_from, ticket))
 
@@ -349,11 +310,11 @@ class DataQuery:
             #    assignment_time = datetime.datetime.now() - datetime.datetime.strptime(metrics.assigned_at, '%Y-%m-%dT%H:%M:%SZ')
             #    ret['assignment_time'] = assignment_time.total_seconds()
 
-            satisfaction_ratings = {
+            #satisfaction_ratings = {
                 #'offered': False, 'unoffered': False,
-                'bad': 0, 'good': 1}
-            if entry.satisfaction_rating.score in satisfaction_ratings:
-                ret['satisfaction_rating'] = satisfaction_ratings[ entry.satisfaction_rating.score ]
+            #    'bad': 0, 'good': 1}
+            #if entry.satisfaction_rating.score in satisfaction_ratings:
+            #    ret['satisfaction_rating'] = satisfaction_ratings[ entry.satisfaction_rating.score ]
 
         return ret
 
@@ -415,8 +376,7 @@ def calc_min(entry, field, ret):
 def calc_notsupported(entry, field, ret):
     return ret
 
-# --- Helpers that build all of the responses ---
-class DataMetric:
+class DataMetric(object):
     metric_funcs = {
         'average': calc_average,
         'median': calc_notsupported,
@@ -460,11 +420,11 @@ class DataMetric:
         },
     }
 
-    metric = False
-    value = False
-    query_from = False
-
     def __init__(self, parameters, query_from):
+        self.metric = False
+        self.value = False
+        self.query_from = False
+
         if 'metric' in parameters:
             self.metric = parameters['metric']
 
@@ -477,6 +437,11 @@ class DataMetric:
             self.value = 'count'
 
         self.query_from = query_from
+
+        # TODO This converts input params to lowercase, unsure if it's a good idea to be so defensive...
+        for d in self.__dict__:
+            if isinstance(self.__dict__[d], basestring):
+                self.__dict__[d] = self.__dict__[d].lower()
 
     def _calc(self, entry, ret):
         if self.metric:
@@ -521,15 +486,7 @@ class DataMetric:
         return DataMetric(params, params['query_from'])
 
 
-class DataMetricResult:
-    metric = False
-    value = False
-    result = False
-    count = False
-    query_from = False
-    entry = False
-    results = False
-
+class DataMetricResult(object):
     def __init__(self, metric, value, result, count, query_from, entry, results):
         self.metric = metric
         self.value = value

@@ -30,7 +30,7 @@ def publish_query(session_id, results):
     rows = []
 
     rows.append( json.dumps({'type':'start','runseq':runseq}) )
-    rows.append( json.dumps({'type':'message','runseq':runseq, 'value': '{}'.format(HumanReadable.dataMetricResult(result, query, session_id))} ) )
+    rows.append( json.dumps({'type':'message','runseq':runseq, 'value': '{}'.format(HumanReadable.dataMetricResult(result, query, session_id, False))} ) )
     rows.append( json.dumps({'type':'query','runseq':runseq, 'value': query.toDict()}) )
     rows.append( json.dumps({'type':'metric','runseq':runseq, 'value': metric.toDict()}) )
 

@@ -1,29 +1,34 @@
 what is the average for pending tickets?
 
 
+ [x] Fix ZenDesk data
+ [ ] Fix bot on Slack
+ [ ] Record movie
+ [ ] Write README
+ [ ] Fix UNKNOWN in hr
  [ ] Fix error message if metric is not set
- [ ] Handle timeout? E.g. what is average tickets
- [ ] what is the average age =>  I cannot get None
- [ ] do we have any open tickets => Yes, there are 122
- [ ] do we have any open tickets created yesterday? => No, sorry...
- [ ] were there tickets updated yesterday? => No, sorry...
+ [x] Handle timeout? E.g. what is average tickets
+ [x] what is the average age =>  I cannot get None
+ [x] do we have any open tickets => Yes, there are 122
+ [x] do we have any open tickets created yesterday? => No, sorry...
+ [x] were there tickets updated yesterday? => No, sorry...
  [ ] do we have any open high priority tickets? Do not understand this
- [ ] are there any on-hold tickets? ==> fails
+ [x] are there any on-hold tickets? ==> fails
  [ ] were there any tickets closed during last week?
  [ ] how many tickets were closed during last 7 days?
  [ ] Which ticket is oldest?
- [ ] Fail safe for selecting closed ticket
- [ ] Fix " 1 weeks " => 1 week
+ [x] Fail safe for selecting closed ticket
+ [x] Fix " 1 weeks " => 1 week
  [ ] Do not publish if not resultl given.
- [ ] How many tickets where closed yesterday? => Fix "during yesterday"
- [ ] Yes, there are => There are...
- [ ] Fix help...
- 
- 
+ [x] How many tickets where closed yesterday? => Fix "during yesterday"
+ [x] Yes, there are => There are...
+ [x] Fix help...
+
+
 You can ask me questions about ZenDesk tickets.
 E.g. to check if there are any tickets which requires your attention
 Do we have any open critical tickets?
-Were there any tickets due during last 7 days?
+Were there any tickets due during last 2 weeks?
 E.g. to do some basic calculations
 What is the average age of open tickets
 What is the average age of open tickets created during last 7 days?
@@ -34,7 +39,7 @@ And finally, you can ask for me to show them to you
 Can I see them
 Show me.
 
-Pro-tip, keep the results windowoo open. It will be updated in real-time as you ask further questions.
+If you keep the results window open. It will be updated in real-time as you ask further questions.
+You can even share the link with your colleagues to keep them up to date!
 
 Looking forward to working with you!
-

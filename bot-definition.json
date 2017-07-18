@@ -1,0 +1,701 @@
+{
+	"name": "DataBot",
+	"description": null,
+	"intents": [{
+			"intentName": "Help",
+			"intentVersion": "4"
+		}, {
+			"intentName": "SelectBooleanFromPeriod",
+			"intentVersion": "13"
+		}, {
+			"intentName": "SelectResultFromPeriod",
+			"intentVersion": "12"
+		}, {
+			"intentName": "ShowViewer",
+			"intentVersion": "2"
+		}, {
+			"intentName": "SelectMetricFromPeriod",
+			"intentVersion": "33"
+		}
+	],
+	"clarificationPrompt": {
+		"messages": [{
+				"contentType": "PlainText",
+				"content": "Woopsies, I didn't catch that. Probably my fault. Please, ask for \"help\" if you need some instructions on how to work best with me."
+			}, {
+				"contentType": "PlainText",
+				"content": "I'm sorry, I didn't understand that. Can you phrase it differently? Ask for \"help\" if you need some instructions on how to work best with me."
+			}
+		],
+		"maxAttempts": 5,
+		"responseCard": null
+	},
+	"abortStatement": {
+		"messages": [{
+				"contentType": "PlainText",
+				"content": "I'm terribly sorry, but I think we need to take a break. I'll exit now, and hope to catch you later!"
+			}
+		],
+		"responseCard": null
+	},
+	"status": "READY",
+	"failureReason": null,
+	"lastUpdatedDate": "2017-07-18T14:59:28.258Z",
+	"createdDate": "2017-07-18T14:59:07.210Z",
+	"idleSessionTTLInSeconds": 300,
+	"voiceId": "Joanna",
+	"checksum": "02008806-b440-472f-a9fc-6e04e54fb1a0",
+	"version": "4",
+	"locale": "en-US",
+	"childDirected": false,
+	"dependencies": {
+		"intents": [{
+				"name": "SelectResultFromPeriod",
+				"description": null,
+				"slots": [{
+						"name": "filter",
+						"description": null,
+						"slotConstraint": "Optional",
+						"slotType": "SelectFilter",
+						"slotTypeVersion": "2",
+						"valueElicitationPrompt": {
+							"messages": [{
+									"contentType": "PlainText",
+									"content": "Filter on?"
+								}
+							],
+							"maxAttempts": 2,
+							"responseCard": null
+						},
+						"priority": 3,
+						"sampleUtterances": [],
+						"responseCard": null
+					}, {
+						"name": "period",
+						"description": null,
+						"slotConstraint": "Optional",
+						"slotType": "SelectPeriod",
+						"slotTypeVersion": "3",
+						"valueElicitationPrompt": {
+							"messages": [{
+									"contentType": "PlainText",
+									"content": "For which period"
+								}
+							],
+							"maxAttempts": 2,
+							"responseCard": null
+						},
+						"priority": 5,
+						"sampleUtterances": [],
+						"responseCard": null
+					}, {
+						"name": "metric",
+						"description": null,
+						"slotConstraint": "Optional",
+						"slotType": "SelectMetric",
+						"slotTypeVersion": "2",
+						"valueElicitationPrompt": {
+							"messages": [{
+									"contentType": "PlainText",
+									"content": "Metric?"
+								}
+							],
+							"maxAttempts": 2,
+							"responseCard": null
+						},
+						"priority": 2,
+						"sampleUtterances": [],
+						"responseCard": null
+					}, {
+						"name": "from",
+						"description": null,
+						"slotConstraint": "Optional",
+						"slotType": "SelectFrom",
+						"slotTypeVersion": "5",
+						"valueElicitationPrompt": {
+							"messages": [{
+									"contentType": "PlainText",
+									"content": "From?"
+								}
+							],
+							"maxAttempts": 2,
+							"responseCard": null
+						},
+						"priority": 4,
+						"sampleUtterances": [],
+						"responseCard": null
+					}, {
+						"name": "event",
+						"description": null,
+						"slotConstraint": "Optional",
+						"slotType": "SelectEvents",
+						"slotTypeVersion": "3",
+						"valueElicitationPrompt": {
+							"messages": [{
+									"contentType": "PlainText",
+									"content": "Event?"
+								}
+							],
+							"maxAttempts": 2,
+							"responseCard": null
+						},
+						"priority": 6,
+						"sampleUtterances": [],
+						"responseCard": null
+					}, {
+						"name": "resultSet",
+						"description": null,
+						"slotConstraint": "Optional",
+						"slotType": "SelectResult",
+						"slotTypeVersion": "1",
+						"valueElicitationPrompt": {
+							"messages": [{
+									"contentType": "PlainText",
+									"content": "What are you after?"
+								}
+							],
+							"maxAttempts": 2,
+							"responseCard": null
+						},
+						"priority": 1,
+						"sampleUtterances": [],
+						"responseCard": null
+					}
+				],
+				"sampleUtterances": ["Which {resultSet} is {filter}", "Give me {filter} {from}", "Which {from} are {filter}", "Which {from} were {event} {period}", "List {filter} {from} {event} {period}"],
+				"dialogCodeHook": {
+					"uri": "arn:aws:lambda:us-east-1:309734231669:function:databot_handle_input",
+					"messageVersion": "1.0"
+				},
+				"fulfillmentActivity": {
+					"type": "CodeHook",
+					"codeHook": {
+						"uri": "arn:aws:lambda:us-east-1:309734231669:function:databot_handle_input",
+						"messageVersion": "1.0"
+					}
+				},
+				"parentIntentSignature": null,
+				"lastUpdatedDate": "2017-07-18T04:16:41.398Z",
+				"createdDate": "2017-07-18T04:16:41.398Z",
+				"version": "12",
+				"checksum": "a77af926-c692-482e-8a04-f09108ba5ff4"
+			}, {
+				"name": "Help",
+				"description": null,
+				"slots": [],
+				"sampleUtterances": ["Help me", "I need help", "Can you help", "What do I do", "What should I do", "help"],
+				"fulfillmentActivity": {
+					"type": "CodeHook",
+					"codeHook": {
+						"uri": "arn:aws:lambda:us-east-1:309734231669:function:databot_handle_input",
+						"messageVersion": "1.0"
+					}
+				},
+				"parentIntentSignature": null,
+				"lastUpdatedDate": "2017-07-18T03:53:38.813Z",
+				"createdDate": "2017-07-18T03:53:38.813Z",
+				"version": "4",
+				"checksum": "dae06abe-1916-4d8d-a69d-49027116bd5b"
+			}, {
+				"name": "SelectBooleanFromPeriod",
+				"description": null,
+				"slots": [{
+						"name": "filter",
+						"description": null,
+						"slotConstraint": "Optional",
+						"slotType": "SelectFilter",
+						"slotTypeVersion": "2",
+						"valueElicitationPrompt": {
+							"messages": [{
+									"contentType": "PlainText",
+									"content": "Filter on?"
+								}
+							],
+							"maxAttempts": 2,
+							"responseCard": null
+						},
+						"priority": 1,
+						"sampleUtterances": [],
+						"responseCard": null
+					}, {
+						"name": "period",
+						"description": null,
+						"slotConstraint": "Optional",
+						"slotType": "SelectPeriod",
+						"slotTypeVersion": "3",
+						"valueElicitationPrompt": {
+							"messages": [{
+									"contentType": "PlainText",
+									"content": "Period?"
+								}
+							],
+							"maxAttempts": 2,
+							"responseCard": null
+						},
+						"priority": 6,
+						"sampleUtterances": [],
+						"responseCard": null
+					}, {
+						"name": "betafilter",
+						"description": null,
+						"slotConstraint": "Optional",
+						"slotType": "SelectEntity",
+						"slotTypeVersion": "2",
+						"valueElicitationPrompt": {
+							"messages": [{
+									"contentType": "PlainText",
+									"content": "Second filter on?"
+								}
+							],
+							"maxAttempts": 2,
+							"responseCard": null
+						},
+						"priority": 4,
+						"sampleUtterances": [],
+						"responseCard": null
+					}, {
+						"name": "from",
+						"description": null,
+						"slotConstraint": "Optional",
+						"slotType": "SelectFrom",
+						"slotTypeVersion": "5",
+						"valueElicitationPrompt": {
+							"messages": [{
+									"contentType": "PlainText",
+									"content": "From where?"
+								}
+							],
+							"maxAttempts": 2,
+							"responseCard": null
+						},
+						"priority": 2,
+						"sampleUtterances": [],
+						"responseCard": null
+					}, {
+						"name": "event",
+						"description": null,
+						"slotConstraint": "Optional",
+						"slotType": "SelectEvents",
+						"slotTypeVersion": "3",
+						"valueElicitationPrompt": {
+							"messages": [{
+									"contentType": "PlainText",
+									"content": "Event?"
+								}
+							],
+							"maxAttempts": 2,
+							"responseCard": null
+						},
+						"priority": 5,
+						"sampleUtterances": [],
+						"responseCard": null
+					}
+				],
+				"sampleUtterances": ["Do we have any {filter} {betafilter} {from}", "Is there any {filter} {from}", "Are there any {filter} {from}", "Do we have some {filter} {from}", "Are there no {filter} {from}", "Was {from} {event} {period}", "Were {from} {event} {period}"],
+				"dialogCodeHook": {
+					"uri": "arn:aws:lambda:us-east-1:309734231669:function:databot_handle_input",
+					"messageVersion": "1.0"
+				},
+				"fulfillmentActivity": {
+					"type": "CodeHook",
+					"codeHook": {
+						"uri": "arn:aws:lambda:us-east-1:309734231669:function:databot_handle_input",
+						"messageVersion": "1.0"
+					}
+				},
+				"parentIntentSignature": null,
+				"lastUpdatedDate": "2017-07-18T04:00:19.037Z",
+				"createdDate": "2017-07-18T04:00:19.037Z",
+				"version": "13",
+				"checksum": "98d83b5c-1564-4da0-ab2d-487b8e089c22"
+			}, {
+				"name": "ShowViewer",
+				"description": null,
+				"slots": [],
+				"sampleUtterances": ["Show me", "Can I see them", "Show them to me"],
+				"fulfillmentActivity": {
+					"type": "CodeHook",
+					"codeHook": {
+						"uri": "arn:aws:lambda:us-east-1:309734231669:function:databot_handle_input",
+						"messageVersion": "1.0"
+					}
+				},
+				"parentIntentSignature": null,
+				"lastUpdatedDate": "2017-07-18T01:16:38.966Z",
+				"createdDate": "2017-07-18T01:16:38.966Z",
+				"version": "2",
+				"checksum": "366d29cb-02da-4241-8fb2-6b1cc1a09123"
+			}, {
+				"name": "SelectMetricFromPeriod",
+				"description": null,
+				"slots": [{
+						"name": "filter",
+						"description": null,
+						"slotConstraint": "Optional",
+						"slotType": "SelectFilter",
+						"slotTypeVersion": "2",
+						"valueElicitationPrompt": {
+							"messages": [{
+									"contentType": "PlainText",
+									"content": "What would you like to filter on? Open, closed, hold..."
+								}
+							],
+							"maxAttempts": 2,
+							"responseCard": null
+						},
+						"priority": 1,
+						"sampleUtterances": [],
+						"responseCard": null
+					}, {
+						"name": "period",
+						"description": null,
+						"slotConstraint": "Optional",
+						"slotType": "SelectPeriod",
+						"slotTypeVersion": "3",
+						"valueElicitationPrompt": {
+							"messages": [{
+									"contentType": "PlainText",
+									"content": "What period? E.g. last 7 days, yesterday, 30 days"
+								}
+							],
+							"maxAttempts": 2,
+							"responseCard": null
+						},
+						"priority": 4,
+						"sampleUtterances": [],
+						"responseCard": null
+					}, {
+						"name": "metric",
+						"description": null,
+						"slotConstraint": "Optional",
+						"slotType": "SelectMetric",
+						"slotTypeVersion": "2",
+						"valueElicitationPrompt": {
+							"messages": [{
+									"contentType": "PlainText",
+									"content": "What metric?"
+								}
+							],
+							"maxAttempts": 2,
+							"responseCard": null
+						},
+						"priority": 3,
+						"sampleUtterances": [],
+						"responseCard": null
+					}, {
+						"name": "from",
+						"description": null,
+						"slotConstraint": "Required",
+						"slotType": "SelectFrom",
+						"slotTypeVersion": "5",
+						"valueElicitationPrompt": {
+							"messages": [{
+									"contentType": "PlainText",
+									"content": "Tickets... just choose tickets for now... :-)"
+								}
+							],
+							"maxAttempts": 2,
+							"responseCard": null
+						},
+						"priority": 2,
+						"sampleUtterances": [],
+						"responseCard": null
+					}, {
+						"name": "event",
+						"description": null,
+						"slotConstraint": "Optional",
+						"slotType": "SelectEvents",
+						"slotTypeVersion": "3",
+						"valueElicitationPrompt": {
+							"messages": [{
+									"contentType": "PlainText",
+									"content": "Event?"
+								}
+							],
+							"maxAttempts": 2,
+							"responseCard": null
+						},
+						"priority": 6,
+						"sampleUtterances": [],
+						"responseCard": null
+					}, {
+						"name": "value",
+						"description": null,
+						"slotConstraint": "Optional",
+						"slotType": "SelectValues",
+						"slotTypeVersion": "2",
+						"valueElicitationPrompt": {
+							"messages": [{
+									"contentType": "PlainText",
+									"content": "Value?"
+								}
+							],
+							"maxAttempts": 2,
+							"responseCard": null
+						},
+						"priority": 5,
+						"sampleUtterances": [],
+						"responseCard": null
+					}
+				],
+				"sampleUtterances": ["What is the {metric} {value} for {filter} {from} {event} {period}", "How {metric} {filter} {from} are there", "How {metric} {from} were {event} during {period}", "How {metric} {from} were there {period}", "How many {metric} {filter} priority {from} are there"],
+				"dialogCodeHook": {
+					"uri": "arn:aws:lambda:us-east-1:309734231669:function:databot_handle_input",
+					"messageVersion": "1.0"
+				},
+				"fulfillmentActivity": {
+					"type": "CodeHook",
+					"codeHook": {
+						"uri": "arn:aws:lambda:us-east-1:309734231669:function:databot_handle_input",
+						"messageVersion": "1.0"
+					}
+				},
+				"parentIntentSignature": null,
+				"lastUpdatedDate": "2017-07-18T13:48:21.312Z",
+				"createdDate": "2017-07-18T13:48:21.312Z",
+				"version": "33",
+				"checksum": "15912815-aa81-42fc-9493-6c87424f0697"
+			}
+		],
+		"slotTypes": [{
+				"name": "SelectFilter",
+				"description": "Filter selection",
+				"enumerationValues": [{
+						"value": "New"
+					}, {
+						"value": "On-hold"
+					}, {
+						"value": "Newest"
+					}, {
+						"value": "Critical"
+					}, {
+						"value": "One-touch"
+					}, {
+						"value": "Open"
+					}, {
+						"value": "Youngest"
+					}, {
+						"value": "Oldest"
+					}, {
+						"value": "Active"
+					}, {
+						"value": "most recent"
+					}, {
+						"value": "Low"
+					}, {
+						"value": "Closed"
+					}, {
+						"value": "Medium"
+					}, {
+						"value": "Deactivated"
+					}, {
+						"value": "Pending"
+					}
+				],
+				"lastUpdatedDate": "2017-07-13T03:10:42.383Z",
+				"createdDate": "2017-07-13T03:10:42.383Z",
+				"version": "2",
+				"checksum": null
+			}, {
+				"name": "SelectMetric",
+				"description": "Metric to Select",
+				"enumerationValues": [{
+						"value": "Minimum"
+					}, {
+						"value": "Max"
+					}, {
+						"value": "Percentage"
+					}, {
+						"value": "Worst"
+					}, {
+						"value": "Number of"
+					}, {
+						"value": "Most"
+					}, {
+						"value": "Average"
+					}, {
+						"value": "Median"
+					}, {
+						"value": "Maximum"
+					}, {
+						"value": "Min"
+					}, {
+						"value": "Least"
+					}, {
+						"value": "Many"
+					}, {
+						"value": "Best"
+					}
+				],
+				"lastUpdatedDate": "2017-07-13T03:22:04.241Z",
+				"createdDate": "2017-07-13T03:22:04.241Z",
+				"version": "2",
+				"checksum": null
+			}, {
+				"name": "SelectResult",
+				"description": "Result",
+				"enumerationValues": [{
+						"value": "Agent"
+					}, {
+						"value": "Ticket"
+					}, {
+						"value": "Issue"
+					}
+				],
+				"lastUpdatedDate": "2017-07-10T21:46:02.531Z",
+				"createdDate": "2017-07-10T21:46:02.531Z",
+				"version": "1",
+				"checksum": null
+			}, {
+				"name": "SelectValues",
+				"description": "Values",
+				"enumerationValues": [{
+						"value": "First reply time"
+					}, {
+						"value": "Satisfaction rating"
+					}, {
+						"value": "Active"
+					}, {
+						"value": "Assignment time"
+					}, {
+						"value": "Replies"
+					}, {
+						"value": "Age"
+					}
+				],
+				"lastUpdatedDate": "2017-07-13T04:01:43.568Z",
+				"createdDate": "2017-07-13T04:01:43.568Z",
+				"version": "2",
+				"checksum": null
+			}, {
+				"name": "SelectEvents",
+				"description": "Events",
+				"enumerationValues": [{
+						"value": "deleted"
+					}, {
+						"value": "reopened"
+					}, {
+						"value": "added"
+					}, {
+						"value": "due"
+					}, {
+						"value": "created"
+					}, {
+						"value": "solved"
+					}, {
+						"value": "closed"
+					}, {
+						"value": "reassigned"
+					}, {
+						"value": "opened"
+					}
+				],
+				"lastUpdatedDate": "2017-07-18T03:53:19.870Z",
+				"createdDate": "2017-07-18T03:53:19.870Z",
+				"version": "3",
+				"checksum": null
+			}, {
+				"name": "SelectPeriod",
+				"description": "Period to Select",
+				"enumerationValues": [{
+						"value": "yesterday"
+					}, {
+						"value": "30 days"
+					}, {
+						"value": "10 days"
+					}, {
+						"value": "last week"
+					}, {
+						"value": "last month"
+					}, {
+						"value": "last 30 days"
+					}, {
+						"value": "today"
+					}, {
+						"value": "next week"
+					}, {
+						"value": "tomorrow"
+					}, {
+						"value": "7 days"
+					}, {
+						"value": "this year"
+					}, {
+						"value": "next month"
+					}
+				],
+				"lastUpdatedDate": "2017-07-13T03:22:03.536Z",
+				"createdDate": "2017-07-13T03:22:03.536Z",
+				"version": "3",
+				"checksum": null
+			}, {
+				"name": "SelectFrom",
+				"description": "Select From",
+				"enumerationValues": [{
+						"value": "Ticket"
+					}, {
+						"value": "Agent"
+					}, {
+						"value": "Task"
+					}, {
+						"value": "    These tickets"
+					}, {
+						"value": "Tasks"
+					}, {
+						"value": "Issues"
+					}, {
+						"value": "Agents"
+					}, {
+						"value": "    Those tickets "
+					}, {
+						"value": "Incidents"
+					}, {
+						"value": "    Incident "
+					}, {
+						"value": "    Question "
+					}, {
+						"value": "Problems"
+					}, {
+						"value": "Tickets"
+					}, {
+						"value": "Problem"
+					}, {
+						"value": "Questions"
+					}, {
+						"value": "Of these"
+					}
+				],
+				"lastUpdatedDate": "2017-07-13T03:25:59.560Z",
+				"createdDate": "2017-07-13T03:25:59.560Z",
+				"version": "5",
+				"checksum": null
+			}, {
+				"name": "SelectEntity",
+				"description": "Entity",
+				"enumerationValues": [{
+						"value": "these"
+					}, {
+						"value": "Brand"
+					}, {
+						"value": "Group"
+					}, {
+						"value": "Organization"
+					}, {
+						"value": "Customer"
+					}, {
+						"value": "Channel"
+					}, {
+						"value": "them"
+					}, {
+						"value": "it"
+					}, {
+						"value": "those"
+					}
+				],
+				"lastUpdatedDate": "2017-07-13T03:35:06.316Z",
+				"createdDate": "2017-07-13T03:35:06.316Z",
+				"version": "2",
+				"checksum": null
+			}
+		]
+	}
+}

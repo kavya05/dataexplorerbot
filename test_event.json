@@ -1,14 +1,27 @@
 {
+  "sessionAttributes": {
+    "session_id": "2961b7de-7180-4167-8529-e23c1f27545c"
+  },
   "currentIntent": {
+    "slots1": {
+      "metric": "many",
+      "value1": "count",
+      "filter": "on-hold",
+      "betafilter": "",
+      "from": "tickets",
+      "resultSet1": "tickets",
+      "event1": "updated",
+      "period": "last 9 days"
+    },
     "slots": {
       "metric": "many",
       "value1": "count",
       "filter": "open",
       "betafilter": "",
       "from": "tickets",
-      "resultSet1": "tickets",
-      "event1": "updated",
-      "period": "last 2 weeks"
+      "resultSet1": "Tickets",
+      "event": "Created",
+      "period1": "Yesterday"
     },
     "slots1":{"from": "high tickets", "metric": "many", "filter": "open open"  },
     "slots1": {
@@ -26,6 +39,7 @@
       "betafilter": "oldest",
       "from": "tickets"
     },
+    "name1": "Help",
     "name1": "ShowViewer",
     "name": "SelectMetricFromPeriod",
     "name1": "SelectBooleanFromPeriod",
@@ -41,6 +55,5 @@
   "invocationSource": "",
   "invocationSource1": "DialogCodeHook",
   "outputDialogMode": "Text",
-  "messageVersion": "1.0",
-  "sessionAttributes": {}
+  "messageVersion": "1.0"
 }
