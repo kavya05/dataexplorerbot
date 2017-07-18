@@ -51,6 +51,8 @@ The query is validated as necessary and the executed. And result returned to use
 
 When a query has been executed, it's result is also published through AWS IoT, using MQTT. The results are published row by row through to a MQTT topic. Handled by lambda `databot_publish`
 
+The bot definition itself is quite "flat" - ideally each question should result in a Fulfillment. This might be straying a bit outside how a Lex bot should work, but as long is it *does* work.
+
 ### Results viewer
 The user can also view results what he's asking from DataBot in the Results viewer.
 The Results viewer is a simple Single Page Application which fetches latest result on first load and subscribes to any updated published by DataBot.
@@ -75,9 +77,8 @@ Sessions are persisted in a simple Dynamo DB table, `databot_sessions`.
  - DynamoDB - Session persistence.
  - AWS IoT - Publish and subscribe to live results from DataBot
 
-## Challenges I ran into
+## Challenges
 Putting together the smorgasbord of options which AWS offers can be daunting at times. Especially when security and IAM roles get involved.
-
 E.g. my initial take would have had session persistence in RDS, but I abandoned this because I couldn't get Lambda to connect to RDS.
 
 Configuring the bot in Lex itself took a lot of experimentation, and I had to take down initial scope to accommodate (perhaps imagined) limitations. I still prefer Lex before regexp:ing my way through it though... :-)
@@ -86,6 +87,8 @@ Testing lambda code locally is possible, but I often ran in into small, subtle c
 
 Deployment and management of Lambda code is something that is not handled very elegantly in this project. There's a rudimentary bash-script, but not enough for production use in any way.
 
+Since this has been an exploratory project in many respects, there wasn't a fully fleshed out design from the get-go. Which rears it's ugly head once or twice in the code. E.g. class `HumanReadable` is an mess of if's and else's...
+
 My Python package management in this project is haphazard.
 
 ### Performance
@@ -93,8 +96,6 @@ My Python package management in this project is haphazard.
 All queries for data goes through to the ZenDesk API. This limits the practical amount of data which can be processed. The the real-world usage of DataBot would be to review limited amounts of operational data (100s of entries), so this is a workable limitation.
 
 However, some queries are invalid due to the number of requests it would result against ZenDesk API (e.g. all closed tickets).
-
-
 
 ### Security
 
@@ -106,6 +107,10 @@ In a fully fleshed out product, this should probably be tried to some kind of au
 Tying this all together in a short amount of time using mostly new technologies.
 
 ## What I learned
+
+A ton of new AWS technologies and their possibilities and challenges.
+Better understanding of the possibilities and limitations of AWS Lex.
+New found respect for the Lambda programming model.
 
 ## What's next for DataBot
 

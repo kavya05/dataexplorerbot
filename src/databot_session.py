@@ -1,7 +1,7 @@
 import logging
 import uuid
 import sys
-sys.path.insert(0, "/local/lib/python2.7/dist-packages")
+#sys.path.insert(0, "/local/lib/python2.7/dist-packages") #TODO For local env...
 import boto3
 import json
 from dataquery import DataMetric, DataQuery, DataMetricResult

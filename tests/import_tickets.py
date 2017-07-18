@@ -70,9 +70,9 @@ if __name__ == '__main__':
     import sys
     #sys.path.append("/local/lib/python2.7/dist-packages")
     #sys.path.insert(0, "/local/lib/python2.7/dist-packages")
-    os.environ['DATABOT_ZD_EMAIL'] = 'm.lundberg@aland.net'
-    os.environ['DATABOT_ZD_TOKEN'] = 'mxGXNPQEKGxe7Kxq14mRXzkprZIRSlkwI1Dxx1do'
-    os.environ['DATABOT_ZD_SUBDOMAIN'] = 'databotcompany'
+    os.environ['DATABOT_ZD_EMAIL'] = ''
+    os.environ['DATABOT_ZD_TOKEN'] = ''
+    os.environ['DATABOT_ZD_SUBDOMAIN'] = ''
     os.environ['DATABOT_VIEWER_ENDPOINT'] = 'http://dataexplorerbot.s3-website-us-east-1.amazonaws.com'
 
     #print sys.path

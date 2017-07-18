@@ -48,7 +48,7 @@ class HumanReadable(object):
             else:
                 #if invalid_slot['parameter']
                 message.append("I do not understand '{}'".format(invalid_slot['value']))
-                message.append("UNKNOWN QUERY: {}".format(invalid_slot))
+                #message.append("UNKNOWN QUERY: {}".format(invalid_slot))
 
         for invalid_slot in invalid_metric:
             if invalid_slot['parameter'] == 'from':
@@ -62,7 +62,8 @@ class HumanReadable(object):
                 else:
                     message.append("I can't get the {} {}".format(invalid_slot['parameter'], invalid_slot['value']))
             else:
-                message.append("UNKNOWN METRIC: {}".format(invalid_slot))
+                message.append("I do not understand '{}'".format(invalid_slot['parameter']))
+                #message.append("UNKNOWN METRIC: {}".format(invalid_slot))
 
         return " ".join(message)
 

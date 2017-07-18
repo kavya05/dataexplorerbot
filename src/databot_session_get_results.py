@@ -35,8 +35,8 @@ if __name__ == '__main__':
     import sys
     import os
     logging.basicConfig()
-    os.environ['DATABOT_ZD_EMAIL'] = 'mats.lundberg@carus.com'
-    os.environ['DATABOT_ZD_TOKEN'] = 'WXXzUFmJAJ4wPFIlrV1vcbdha40hizwR1uvYsfjM'
-    os.environ['DATABOT_ZD_SUBDOMAIN'] = 'caruspbs'
+    os.environ['DATABOT_ZD_EMAIL'] = ''
+    os.environ['DATABOT_ZD_TOKEN'] = ''
+    os.environ['DATABOT_ZD_SUBDOMAIN'] = ''
     res = lambda_handler({'session_id': '6d3f2794-7541-51ab-9591-71062e6367e7'}, '')
     print res

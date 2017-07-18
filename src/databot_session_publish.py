@@ -1,7 +1,7 @@
 from aws_helpers import v4_createPresignedURL
 from aws_helpers import validate_item
 import sys
-sys.path.insert(0, "/local/lib/python2.7/dist-packages")
+#sys.path.insert(0, "/local/lib/python2.7/dist-packages") #TODO For local env.
 import json
 import os
 import time
