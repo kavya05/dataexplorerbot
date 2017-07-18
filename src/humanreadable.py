@@ -47,7 +47,8 @@ class HumanReadable(object):
                 message.append("I do not understand the period you gave me: '{}'.".format(invalid_slot['value']))
             else:
                 #if invalid_slot['parameter']
-                message.append("I do not understand '{}'".format(invalid_slot['value']))
+                #message.append("I do not understand '{}'".format(invalid_slot['value']))
+                message.append("I do not understand {} {}".format(invalid_slot['parameter'], invalid_slot['value']))
                 #message.append("UNKNOWN QUERY: {}".format(invalid_slot))
 
         for invalid_slot in invalid_metric:
@@ -61,8 +62,10 @@ class HumanReadable(object):
                     message.append("Getting {} of {} doesn't make sense to me.".format(invalid_slot['value'], invalid_slot['contradiction_value']))
                 else:
                     message.append("I can't get the {} {}".format(invalid_slot['parameter'], invalid_slot['value']))
+            elif invalid_slot['value'] is None or invalid_slot['value'] == False:
+                message.append("Sorry, I do not understand your question.")
             else:
-                message.append("I do not understand '{}'".format(invalid_slot['parameter']))
+                message.append("I do not understand {} {}".format(invalid_slot['parameter'], invalid_slot['value']))
                 #message.append("UNKNOWN METRIC: {}".format(invalid_slot))
 
         return " ".join(message)
