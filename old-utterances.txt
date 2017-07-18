@@ -1,0 +1,11 @@
+Give me ​{value}​ of ​{filter}​ ​{from}​
+How ​{metric}​ ​{from}​ are ​{event}​ ​{period}​
+How ​{metric}​ ​{from}​ were there ​{period}​
+How ​{metric}​ of ​{from}​ are ​{filter}​
+How ​{metric}​ ​{filter}​ ​{from}​ ​{period}​
+How ​{metric}​ ​{from}​ during ​{period}​
+How ​{metric}​ ​{filter}​ ​{from}​
+​{metric}​ ​{from}​ during ​{period}​
+What is the ​{metric}​ ​{value}​ during ​{period}​
+Give me ​{value}​ of ​{filter}​ ​{from}​ during ​{period}​
+Give me ​{metric}​ ​{value}​ of ​{filter}​ ​{from}​ during ​{period}​

@@ -26,7 +26,7 @@ logger.setLevel(logging.INFO)
 class HumanReadable(object):
     @staticmethod
     def get_url_to_viewer(session_id):
-        return "http://localhost:8080/{}/".format(session_id)
+        return "{}/#{}".format(os.environ['DATABOT_VIEWER_ENDPOINT'], session_id)
 
     @staticmethod
     def DataQuery_validate(invalid_query, invalid_metric):
@@ -78,7 +78,7 @@ class HumanReadable(object):
                 ret_str = "I found {} {} {}.".format(res, " ".join(query.filters), query.query_from, HumanReadable.get_url_to_viewer(session_id))#You can review them here: {}
 
                 if query.period and query.event:
-                    ret += "{} during {}".format(query.event, query.period)
+                    ret_str += "{} during {}".format(query.event, query.period)
 
                 return ret_str
             else:

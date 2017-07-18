@@ -45,15 +45,15 @@ body {
     <div id="loading">LOADING ...</div>
     <div id="error" style="display: none;">Woopsies... Something went wrong, please reload the page!</div>
 
-    <script src="/node_modules/mqtt/dist/mqtt.js"></script>
-    <script src="/node_modules/axios/dist/axios.js"></script>
+    <script src="mqtt.js"></script>
+    <script src="axios.js"></script>
 <script>
 var get_session_id = function() {
   url = window.location.href
   parts = url.split('/')
   if(parts.length < 4)
     return false
-  return parts[3];
+  return parts[3].slice(1);
 }
 
 var add_message = function(message) {
